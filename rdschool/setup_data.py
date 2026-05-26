@@ -139,20 +139,36 @@ ITEMS = [
 
 
 def setup_all():
-    """Run every seed step in dependency order."""
+    """Run structural setup only (depts, CCs, roles, custom fields, workflow).
+
+    Called automatically on `bench install-app rdschool` via the after_install
+    hook. Safe for production — does NOT create demo users, sample suppliers,
+    or sample items. To add those (for staging/dev), call seed_demo_data()
+    separately or set `bench --site <site> set-config rdschool_seed_demo_data 1`
+    before installing.
+    """
     create_departments()
     create_cost_centers()
     create_role_profiles()
-    create_demo_users()
-    create_school_roles_and_assign()
-    create_supplier_groups()
-    create_suppliers()
+    create_school_roles_and_assign()  # Roles only; users are demo data
     create_item_groups()
-    create_items()
+    create_supplier_groups()
     create_mr_custom_fields()
     create_mr_workflow()
+    if frappe.conf.get("rdschool_seed_demo_data"):
+        seed_demo_data()
     frappe.db.commit()
     print("setup_all: complete")
+
+
+def seed_demo_data():
+    """Add sample suppliers, items, and demo users (Anita Teacher, Ravi
+    Principal, etc.). For dev/staging only — never call on production where
+    real users will sign in."""
+    create_suppliers()
+    create_items()
+    create_demo_users()
+    print("seed_demo_data: complete")
 
 
 def create_departments():
