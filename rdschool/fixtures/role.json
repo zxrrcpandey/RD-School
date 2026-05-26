@@ -1,0 +1,80 @@
+[
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": null,
+  "is_custom": 0,
+  "modified": "2026-05-25 14:57:35.553885",
+  "name": "School Teacher",
+  "restrict_to_domain": null,
+  "role_name": "School Teacher",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": null,
+  "is_custom": 0,
+  "modified": "2026-05-25 14:57:35.701394",
+  "name": "School HOD",
+  "restrict_to_domain": null,
+  "role_name": "School HOD",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": null,
+  "is_custom": 0,
+  "modified": "2026-05-25 14:57:35.703846",
+  "name": "School Principal",
+  "restrict_to_domain": null,
+  "role_name": "School Principal",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": null,
+  "is_custom": 0,
+  "modified": "2026-05-25 14:57:35.706094",
+  "name": "School Stores Incharge",
+  "restrict_to_domain": null,
+  "role_name": "School Stores Incharge",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": null,
+  "is_custom": 0,
+  "modified": "2026-05-25 14:57:35.708424",
+  "name": "School Accountant",
+  "restrict_to_domain": null,
+  "role_name": "School Accountant",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": null,
+  "is_custom": 0,
+  "modified": "2026-05-25 14:57:35.710745",
+  "name": "School Auditor",
+  "restrict_to_domain": null,
+  "role_name": "School Auditor",
+  "two_factor_auth": 0
+ }
+]

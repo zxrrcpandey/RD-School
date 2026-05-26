@@ -1,0 +1,164 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-05-25 14:39:34.455897",
+  "name": "School Teacher",
+  "role_profile": "School Teacher",
+  "roles": [
+   {
+    "parent": "School Teacher",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   },
+   {
+    "parent": "School Teacher",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Stock User"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-05-25 14:39:34.467655",
+  "name": "School HOD",
+  "role_profile": "School HOD",
+  "roles": [
+   {
+    "parent": "School HOD",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   },
+   {
+    "parent": "School HOD",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Stock User"
+   },
+   {
+    "parent": "School HOD",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Purchase User"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-05-25 14:39:34.469912",
+  "name": "School Principal",
+  "role_profile": "School Principal",
+  "roles": [
+   {
+    "parent": "School Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   },
+   {
+    "parent": "School Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Stock Manager"
+   },
+   {
+    "parent": "School Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Purchase Manager"
+   },
+   {
+    "parent": "School Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Accounts Manager"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-05-25 14:39:34.472790",
+  "name": "School Stores Incharge",
+  "role_profile": "School Stores Incharge",
+  "roles": [
+   {
+    "parent": "School Stores Incharge",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   },
+   {
+    "parent": "School Stores Incharge",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Stock Manager"
+   },
+   {
+    "parent": "School Stores Incharge",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Purchase User"
+   },
+   {
+    "parent": "School Stores Incharge",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Item Manager"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-05-25 14:39:34.475068",
+  "name": "School Accountant",
+  "role_profile": "School Accountant",
+  "roles": [
+   {
+    "parent": "School Accountant",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   },
+   {
+    "parent": "School Accountant",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Accounts User"
+   },
+   {
+    "parent": "School Accountant",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Purchase User"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-05-25 14:39:34.477746",
+  "name": "School Auditor",
+  "role_profile": "School Auditor",
+  "roles": [
+   {
+    "parent": "School Auditor",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   },
+   {
+    "parent": "School Auditor",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Auditor"
+   }
+  ]
+ }
+]

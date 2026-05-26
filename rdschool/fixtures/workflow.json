@@ -1,0 +1,122 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Workflow",
+  "document_type": "Material Request",
+  "is_active": 1,
+  "modified": "2026-05-25 15:25:17.360395",
+  "name": "MR Approval - RSB",
+  "override_status": 0,
+  "send_email_alert": 0,
+  "states": [
+   {
+    "allow_edit": "School Teacher",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 0,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "MR Approval - RSB",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Draft",
+    "update_field": null,
+    "update_value": null,
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "School Principal",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 0,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "MR Approval - RSB",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Pending Approval",
+    "update_field": null,
+    "update_value": null,
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "School Principal",
+    "avoid_status_override": 0,
+    "doc_status": "1",
+    "is_optional_state": 0,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "MR Approval - RSB",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Approved",
+    "update_field": null,
+    "update_value": null,
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "School Principal",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 0,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "MR Approval - RSB",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "send_email": 1,
+    "state": "Rejected",
+    "update_field": null,
+    "update_value": null,
+    "workflow_builder_id": null
+   }
+  ],
+  "transitions": [
+   {
+    "action": "Submit for Approval",
+    "allow_self_approval": 1,
+    "allowed": "School Teacher",
+    "condition": null,
+    "next_state": "Pending Approval",
+    "parent": "MR Approval - RSB",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "send_email_to_creator": 0,
+    "state": "Draft",
+    "workflow_builder_id": null
+   },
+   {
+    "action": "Approve",
+    "allow_self_approval": 1,
+    "allowed": "School Principal",
+    "condition": null,
+    "next_state": "Approved",
+    "parent": "MR Approval - RSB",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "send_email_to_creator": 0,
+    "state": "Pending Approval",
+    "workflow_builder_id": null
+   },
+   {
+    "action": "Reject",
+    "allow_self_approval": 1,
+    "allowed": "School Principal",
+    "condition": null,
+    "next_state": "Rejected",
+    "parent": "MR Approval - RSB",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "send_email_to_creator": 0,
+    "state": "Pending Approval",
+    "workflow_builder_id": null
+   }
+  ],
+  "workflow_data": null,
+  "workflow_name": "MR Approval - RSB",
+  "workflow_state_field": "workflow_state"
+ }
+]
