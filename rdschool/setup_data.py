@@ -347,6 +347,7 @@ def setup_all():
     create_supplier_groups()
     create_mr_custom_fields()
     create_mr_workflow()
+    create_mr_notifications()
     if frappe.conf.get("rdschool_seed_demo_data"):
         seed_demo_data()
     frappe.db.commit()
@@ -801,6 +802,97 @@ def create_mr_workflow():
     )
     workflow.insert(ignore_permissions=True)
     print(f"create_mr_workflow: created workflow {MR_WORKFLOW_NAME!r}")
+
+
+# ---------------------------------------------------------------------------
+# Phase 3C: In-app notifications on workflow transitions
+# ---------------------------------------------------------------------------
+
+# (name, condition, recipients_spec, subject_template, message_template)
+# recipients_spec is a list of dicts mirroring Notification.recipients child table.
+MR_NOTIFICATIONS = [
+    {
+        "name": "MR Submitted for Approval - RSB",
+        "condition": "doc.workflow_state == 'Pending Approval'",
+        "recipients": [{"receiver_by_role": "School Principal"}],
+        "subject": "Material Request {{ doc.name }} pending your approval",
+        "message": (
+            "<p>{{ frappe.session.user }} has submitted Material Request "
+            "<b>{{ doc.name }}</b> for your approval.</p>"
+            "<p><b>Department:</b> {{ doc.rsb_school_department }}<br>"
+            "<b>Cost Center:</b> {{ doc.rsb_cost_center }}<br>"
+            "<b>Reason:</b> {{ doc.rsb_reason_for_request }}<br>"
+            "<b>Required by:</b> {{ doc.schedule_date }}</p>"
+            "<p>Open the document to Approve, Send Back for Revision, or Reject.</p>"
+        ),
+    },
+    {
+        "name": "MR Approved - RSB",
+        "condition": "doc.workflow_state == 'Approved'",
+        "recipients": [{"receiver_by_document_field": "owner"}],
+        "subject": "Your Material Request {{ doc.name }} was approved",
+        "message": (
+            "<p>Your Material Request <b>{{ doc.name }}</b> has been approved.</p>"
+            "<p>Stores will create a Purchase Order based on this request.</p>"
+        ),
+    },
+    {
+        "name": "MR Sent Back for Revision - RSB",
+        "condition": "doc.workflow_state == 'Draft' and doc.docstatus == 0",
+        "recipients": [{"receiver_by_document_field": "owner"}],
+        "subject": "Material Request {{ doc.name }} sent back for revision",
+        "message": (
+            "<p>The Principal has sent your Material Request <b>{{ doc.name }}</b> "
+            "back for revision.</p><p>Edit the request and submit for approval again.</p>"
+        ),
+    },
+    {
+        "name": "MR Rejected - RSB",
+        "condition": "doc.workflow_state == 'Rejected'",
+        "recipients": [{"receiver_by_document_field": "owner"}],
+        "subject": "Your Material Request {{ doc.name }} was rejected",
+        "message": (
+            "<p>Your Material Request <b>{{ doc.name }}</b> has been rejected.</p>"
+            "<p>You can edit it and resubmit if appropriate.</p>"
+        ),
+    },
+]
+
+
+def create_mr_notifications():
+    """Create in-app (System Notification channel) alerts on MR state changes.
+
+    Uses channel='System Notification' so notifications fire WITHOUT needing
+    an SMTP / Email Account — they appear in the bell icon at top-right.
+    Idempotent — drops and recreates each notification to reflect the latest
+    template in this file.
+    """
+    created = 0
+    for spec in MR_NOTIFICATIONS:
+        if frappe.db.exists("Notification", spec["name"]):
+            frappe.delete_doc(
+                "Notification", spec["name"], ignore_permissions=True, force=True
+            )
+        doc = frappe.get_doc(
+            {
+                "doctype": "Notification",
+                "name": spec["name"],
+                "subject": spec["subject"],
+                "document_type": "Material Request",
+                "event": "Value Change",
+                "value_changed": "workflow_state",
+                "condition": spec["condition"],
+                "channel": "System Notification",  # in-app bell, no SMTP needed
+                "enabled": 1,
+                "is_standard": 0,
+                "send_system_notification": 1,
+                "recipients": spec["recipients"],
+                "message": spec["message"],
+            }
+        )
+        doc.insert(ignore_permissions=True)
+        created += 1
+    print(f"create_mr_notifications: ensured {created} notifications")
 
 
 # ---------------------------------------------------------------------------
