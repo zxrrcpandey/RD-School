@@ -18,6 +18,11 @@ doc_events = {
     "Purchase Order": {
         "validate": "rdschool.material_request.copy_cost_center_from_mr",
     },
+    "User": {
+        # Auto-grant Company User Permission so the new user can see
+        # Department/Cost Center records without manual setup.
+        "after_insert": "rdschool.setup_data.auto_add_company_user_permission",
+    },
 }
 
 
