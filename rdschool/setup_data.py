@@ -138,6 +138,136 @@ ITEMS = [
 ]
 
 
+# Doctype perms granted to each School role. Format:
+#   { role_name: [ (doctype, {perm_flag: 1, ...}), ... ] }
+# Only flags set to 1 are persisted; everything unset stays at the default 0.
+# These are ADDITIVE — applied only if no DocPerm row exists yet for
+# (parent=doctype, role=role_name).
+SCHOOL_ROLE_DOCPERMS = {
+    "School Teacher": [
+        ("Department", {"read": 1}),
+        ("Cost Center", {"read": 1}),
+        ("Item", {"read": 1}),
+        ("Item Group", {"read": 1}),
+        ("UOM", {"read": 1}),
+        ("Supplier", {"read": 1}),
+        ("Material Request", {
+            "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
+            "print": 1, "email": 1, "report": 1,
+        }),
+    ],
+    "School HOD": [
+        ("Department", {"read": 1}),
+        ("Cost Center", {"read": 1}),
+        ("Item", {"read": 1}),
+        ("Item Group", {"read": 1}),
+        ("UOM", {"read": 1}),
+        ("Supplier", {"read": 1}),
+        ("Material Request", {
+            "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
+            "print": 1, "email": 1, "report": 1,
+        }),
+    ],
+    "School Principal": [
+        ("Department", {"read": 1}),
+        ("Cost Center", {"read": 1}),
+        ("Item", {"read": 1}),
+        ("Item Group", {"read": 1}),
+        ("UOM", {"read": 1}),
+        ("Supplier", {"read": 1}),
+        ("Material Request", {
+            "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
+            "print": 1, "email": 1, "report": 1,
+        }),
+        ("Purchase Order", {"read": 1, "print": 1, "email": 1, "report": 1}),
+        ("Purchase Receipt", {"read": 1, "print": 1, "email": 1, "report": 1}),
+        ("Purchase Invoice", {"read": 1, "print": 1, "email": 1, "report": 1}),
+    ],
+    "School Stores Incharge": [
+        ("Department", {"read": 1}),
+        ("Cost Center", {"read": 1}),
+        ("Item", {"read": 1, "write": 1, "create": 1}),
+        ("Item Group", {"read": 1, "write": 1, "create": 1}),
+        ("UOM", {"read": 1, "write": 1, "create": 1}),
+        ("Supplier", {"read": 1, "write": 1, "create": 1}),
+        ("Material Request", {"read": 1, "print": 1, "report": 1}),
+        ("Purchase Order", {
+            "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
+            "print": 1, "email": 1, "report": 1,
+        }),
+        ("Purchase Receipt", {
+            "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
+            "print": 1, "email": 1, "report": 1,
+        }),
+    ],
+    "School Accountant": [
+        ("Department", {"read": 1}),
+        ("Cost Center", {"read": 1}),
+        ("Item", {"read": 1}),
+        ("Supplier", {"read": 1, "write": 1, "create": 1}),
+        ("Material Request", {"read": 1, "print": 1, "report": 1}),
+        ("Purchase Order", {"read": 1, "print": 1, "report": 1}),
+        ("Purchase Receipt", {"read": 1, "print": 1, "report": 1}),
+        ("Purchase Invoice", {
+            "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
+            "print": 1, "email": 1, "report": 1,
+        }),
+        ("Payment Entry", {
+            "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
+            "print": 1, "email": 1, "report": 1,
+        }),
+    ],
+    "School Auditor": [
+        ("Department", {"read": 1}),
+        ("Cost Center", {"read": 1}),
+        ("Item", {"read": 1}),
+        ("Supplier", {"read": 1}),
+        ("Material Request", {"read": 1, "print": 1, "report": 1}),
+        ("Purchase Order", {"read": 1, "print": 1, "report": 1}),
+        ("Purchase Receipt", {"read": 1, "print": 1, "report": 1}),
+        ("Purchase Invoice", {"read": 1, "print": 1, "report": 1}),
+        ("Payment Entry", {"read": 1, "print": 1, "report": 1}),
+    ],
+}
+
+
+def grant_school_role_perms():
+    """Create DocPerm rows for each School role on the doctypes they need.
+
+    Custom roles created in code start with ZERO doctype permissions, so
+    users assigned only a School role can't read Department/Cost Center
+    (which caused the empty dropdown bug). This function backfills the
+    permissions. Idempotent — skips any (doctype, role) that already has a
+    DocPerm row.
+    """
+    created = 0
+    for role, dt_perms in SCHOOL_ROLE_DOCPERMS.items():
+        if not frappe.db.exists("Role", role):
+            continue
+        for doctype, perms in dt_perms:
+            if not frappe.db.exists("DocType", doctype):
+                continue
+            existing = frappe.db.exists(
+                "Custom DocPerm", {"parent": doctype, "role": role}
+            )
+            if existing:
+                continue
+            doc = {
+                "doctype": "Custom DocPerm",
+                "parent": doctype,
+                "parenttype": "DocType",
+                "parentfield": "permissions",
+                "role": role,
+                "permlevel": 0,
+            }
+            doc.update(perms)
+            frappe.get_doc(doc).insert(ignore_permissions=True)
+            created += 1
+    # Clear permission cache so the new perms take effect without a restart
+    frappe.clear_cache()
+    print(f"grant_school_role_perms: created {created} new DocPerm rows")
+
+
 def setup_all():
     """Run structural setup only (depts, CCs, roles, custom fields, workflow).
 
@@ -151,6 +281,7 @@ def setup_all():
     create_cost_centers()
     create_role_profiles()
     create_school_roles_and_assign()  # Roles only; users are demo data
+    grant_school_role_perms()
     create_item_groups()
     create_supplier_groups()
     create_mr_custom_fields()
@@ -535,7 +666,15 @@ MR_WORKFLOW_TRANSITIONS = [
     # (from_state, action, to_state, allowed_role)
     ("Draft", "Submit for Approval", "Pending Approval", "School Teacher"),
     ("Pending Approval", "Approve", "Approved", "School Principal"),
+    # Principal can send the MR back to Draft for the Teacher to edit and
+    # resubmit — softer than Reject (which closes the loop entirely).
+    ("Pending Approval", "Send Back for Revision", "Draft", "School Principal"),
     ("Pending Approval", "Reject", "Rejected", "School Principal"),
+    # After revision, Teacher resubmits via the same Draft -> Pending Approval
+    # action. Rejected docs can also be re-edited and resubmitted (docstatus
+    # is still 0); the Teacher just transitions Rejected -> Draft via the
+    # Resubmit action below, then submits for approval again.
+    ("Rejected", "Resubmit", "Draft", "School Teacher"),
 ]
 
 
@@ -575,7 +714,10 @@ def create_mr_workflow():
             "document_type": "Material Request",
             "workflow_state_field": "workflow_state",
             "is_active": 1,
-            "send_email_alert": 0,
+            # In-app bell-icon notifications fire on every state transition.
+            # Email notifications also fire IF an outgoing Email Account is
+            # configured on the site (Settings > Email Domain / Email Account).
+            "send_email_alert": 1,
             "states": [
                 {
                     "state": s,
