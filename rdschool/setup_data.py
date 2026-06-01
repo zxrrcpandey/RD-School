@@ -231,6 +231,29 @@ SCHOOL_ROLE_DOCPERMS = {
 }
 
 
+def _insert_company_user_permission(user, company):
+    """Insert a User Permission row directly (the frappe.permissions
+    add_user_permission helper signature varies across versions — direct
+    insert is portable).
+    """
+    if frappe.db.exists(
+        "User Permission",
+        {"user": user, "allow": "Company", "for_value": company},
+    ):
+        return False
+    frappe.get_doc(
+        {
+            "doctype": "User Permission",
+            "user": user,
+            "allow": "Company",
+            "for_value": company,
+            "apply_to_all_doctypes": 1,
+            "is_default": 1,
+        }
+    ).insert(ignore_permissions=True)
+    return True
+
+
 def ensure_company_user_permissions():
     """Add a User Permission (Company = current company) for every System User
     that doesn't have one. Department and Cost Center enforce User Permissions
@@ -240,31 +263,22 @@ def ensure_company_user_permissions():
     Idempotent. Skips Administrator (bypasses User Permissions anyway) and
     Guest. Run any time; safe to re-run.
     """
-    from frappe.permissions import add_user_permission
-
     company = _company()
     affected = 0
     for email in frappe.db.sql_list(
         "select name from tabUser where user_type = 'System User' "
         "and name not in ('Administrator', 'Guest') and enabled = 1"
     ):
-        existing = frappe.db.exists(
-            "User Permission",
-            {"user": email, "allow": "Company", "for_value": company},
-        )
-        if existing:
-            continue
-        add_user_permission(
-            "Company", company, email, ignore_permissions=True, apply_to_all_doctypes=1
-        )
-        affected += 1
+        if _insert_company_user_permission(email, company):
+            affected += 1
+    frappe.clear_cache()
     print(f"ensure_company_user_permissions: added UP for {affected} users -> {company}")
 
 
 def auto_add_company_user_permission(doc, method=None):
     """User after_insert hook — auto-grant the Company User Permission so the
     new user immediately sees Department/Cost Center/etc. records linked to
-    the school's company. Skips Website Users and non-enabled users.
+    the school's company.
     """
     if doc.user_type != "System User":
         return
@@ -274,16 +288,7 @@ def auto_add_company_user_permission(doc, method=None):
         company = _company()
     except RuntimeError:
         return  # Setup wizard not yet run; do nothing
-    if frappe.db.exists(
-        "User Permission",
-        {"user": doc.name, "allow": "Company", "for_value": company},
-    ):
-        return
-    from frappe.permissions import add_user_permission
-
-    add_user_permission(
-        "Company", company, doc.name, ignore_permissions=True, apply_to_all_doctypes=1
-    )
+    _insert_company_user_permission(doc.name, company)
 
 
 def grant_school_role_perms():
