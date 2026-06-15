@@ -438,15 +438,68 @@ def grant_school_role_perms():
     print(f"grant_school_role_perms: created {created} new DocPerm rows")
 
 
+# Supporting master doctypes that buying / stock / accounts FORMS reference
+# (party + company Address/Contact, terms, price list, taxes, warehouse, …).
+# School roles need READ on these or the transaction forms (Supplier Quotation,
+# RFQ, PO, PR, PI, Payment) throw "No permission on Address/Contact/…". We grant
+# read directly via Custom DocPerm so access does NOT depend on the built-in
+# roles in each profile being synced (v15 sync is unreliable).
+SUPPORT_READ_DOCTYPES = [
+    "Address",
+    "Contact",
+    "Terms and Conditions",
+    "Price List",
+    "Warehouse",
+    "Currency",
+    "UOM",
+    "Payment Terms Template",
+    "Payment Term",
+    "Purchase Taxes and Charges Template",
+    "Item Tax Template",
+    "Tax Category",
+    "Mode of Payment",
+    "Item Group",
+    "Supplier Group",
+    "Brand",
+]
+# Roles that work with transactions and therefore need the supporting reads.
+# (Reception only handles Direct Inward Receipt — no buying masters needed.)
+SUPPORT_READ_ROLES = [
+    "School Teacher",
+    "School HOD",
+    "School Vice Principal",
+    "School Principal",
+    "School Director",
+    "School Stores Incharge",
+    "School Accountant",
+    "School Auditor",
+    "School Gate Security",
+]
+
+
+def _support_read_pairs():
+    """(role, doctype) pairs for supporting-master read grants, skipping any
+    pair already declared explicitly in SCHOOL_ROLE_DOCPERMS."""
+    explicit = {
+        (role, dt)
+        for role, perms in SCHOOL_ROLE_DOCPERMS.items()
+        for dt, _flags in perms
+    }
+    for role in SUPPORT_READ_ROLES:
+        for dt in SUPPORT_READ_DOCTYPES:
+            if (role, dt) not in explicit:
+                yield role, dt
+
+
 def rebuild_school_docperms():
     """Authoritatively rebuild ALL Custom DocPerm rows for School roles from
-    SCHOOL_ROLE_DOCPERMS (delete-then-recreate).
+    SCHOOL_ROLE_DOCPERMS + the supporting-master read grants (delete-then-
+    recreate).
 
     grant_school_role_perms() is create-if-missing and will NOT upgrade an
-    existing (doctype, role) row — so changed rights (e.g. Stores gaining MR
-    write + RFQ/Supplier Quotation, or new roles) won't take. This function
-    makes the dict the single source of truth. Safe: the delete + recreate
-    happen in one transaction; access is restored immediately.
+    existing (doctype, role) row — so changed rights won't take. This function
+    makes the dicts the single source of truth. Safe: delete + recreate happen
+    in one transaction; access is restored immediately.
     """
     roles = list(SCHOOL_ROLE_DOCPERMS.keys())
     deleted = 0
@@ -457,26 +510,35 @@ def rebuild_school_docperms():
         for name in rows:
             frappe.delete_doc("Custom DocPerm", name, ignore_permissions=True, force=True)
             deleted += 1
+
+    def _mk(role, doctype, perms):
+        if not frappe.db.exists("Role", role) or not frappe.db.exists("DocType", doctype):
+            return 0
+        doc = {
+            "doctype": "Custom DocPerm",
+            "parent": doctype,
+            "parenttype": "DocType",
+            "parentfield": "permissions",
+            "role": role,
+            "permlevel": 0,
+        }
+        doc.update(perms)
+        frappe.get_doc(doc).insert(ignore_permissions=True)
+        return 1
+
     created = 0
     for role, dt_perms in SCHOOL_ROLE_DOCPERMS.items():
-        if not frappe.db.exists("Role", role):
-            continue
         for doctype, perms in dt_perms:
-            if not frappe.db.exists("DocType", doctype):
-                continue
-            doc = {
-                "doctype": "Custom DocPerm",
-                "parent": doctype,
-                "parenttype": "DocType",
-                "parentfield": "permissions",
-                "role": role,
-                "permlevel": 0,
-            }
-            doc.update(perms)
-            frappe.get_doc(doc).insert(ignore_permissions=True)
-            created += 1
+            created += _mk(role, doctype, perms)
+    # Supporting-master read grants (Address, Contact, taxes, etc.)
+    support = 0
+    for role, doctype in _support_read_pairs():
+        support += _mk(role, doctype, {"read": 1})
     frappe.clear_cache()
-    print(f"rebuild_school_docperms: deleted {deleted}, recreated {created} DocPerm rows")
+    print(
+        f"rebuild_school_docperms: deleted {deleted}, recreated {created} "
+        f"+ {support} supporting-read DocPerm rows"
+    )
 
 
 def setup_all():
