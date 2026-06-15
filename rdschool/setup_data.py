@@ -1918,3 +1918,148 @@ def run_fixes_regression():
     frappe.set_user("Administrator"); frappe.db.commit()
     print("[FIXREG] ALL PASSED")
     return {"po_from_sq": po.name, "gate": ge2.name}
+
+
+# ===========================================================================
+# Post-deploy health check — run after EVERY deploy so regressions are caught
+# by us, not by a user. Read-only (creates no documents).
+# ===========================================================================
+
+# Role -> (doctype, ptype, expected) permission expectations.
+HEALTH_PERM_EXPECT = [
+    ("School HOD", "Material Request", "create", True),
+    ("School HOD", "Department", "read", True),
+    ("School HOD", "Cost Center", "read", True),
+    ("School HOD", "Item", "read", True),
+    ("School Vice Principal", "Material Request", "write", True),
+    ("School Stores Incharge", "Purchase Order", "create", True),
+    ("School Stores Incharge", "Address", "read", True),
+    ("School Stores Incharge", "Supplier Quotation", "create", True),
+    ("School Stores Incharge", "Purchase Receipt", "create", True),
+    ("School Principal", "Supplier Quotation", "read", True),
+    ("School Accountant", "Purchase Invoice", "create", True),
+    ("School Gate Security", "Gate Entry", "create", True),
+    ("School Gate Security", "Material Request", "create", False),  # negative
+    ("School Reception", "Direct Inward Receipt", "write", True),
+]
+
+
+def _a_user_with_role(role):
+    """First enabled, non-system user holding `role` (for perm/dropdown checks)."""
+    for r in frappe.get_all("Has Role", filters={"role": role}, fields=["parent"], limit=200):
+        u = r.parent
+        if u in ("Administrator", "Guest"):
+            continue
+        if frappe.db.get_value("User", u, "enabled"):
+            return u
+    return None
+
+
+def verify_deployment(verbose=True):
+    """Read-only health check covering every regression class we've hit:
+    company-baked link_filters, missing role permissions, missing built-in
+    roles, missing Company User Permission, orphan workflow states, missing
+    doctypes/fields, empty dept/CC dropdowns. Returns a dict; prints
+    'HEALTHCHECK PASS' or 'HEALTHCHECK FAIL: ...' so a deploy script can gate
+    on it. Creates NO documents.
+    """
+    company = _company()
+    checks = []
+
+    def ck(name, ok, detail=""):
+        checks.append({"check": name, "ok": bool(ok), "detail": str(detail)})
+
+    # 1. Company-localized link_filters (the exact bug that hit prod).
+    for fn in ("rsb_school_department", "rsb_cost_center"):
+        lf = frappe.db.get_value(
+            "Custom Field", {"dt": "Material Request", "fieldname": fn}, "link_filters"
+        ) or ""
+        ck(f"link_filter {fn} -> local company", f'"{company}"' in lf, lf)
+
+    # 2. MR routing custom fields present.
+    for fn in ("rsb_purchase_category", "rsb_stock_availability",
+               "rsb_selected_supplier_quotation"):
+        ck(f"custom field {fn} exists",
+           frappe.db.exists("Custom Field", {"dt": "Material Request", "fieldname": fn}))
+
+    # 3. Workflow active + no orphan in-flight states.
+    wf_active = frappe.db.get_value(
+        "Workflow", {"document_type": "Material Request", "is_active": 1}, "name"
+    )
+    ck("MR workflow active", wf_active, wf_active)
+    valid = set(s.state for s in frappe.get_doc("Workflow", "MR Approval - RSB").states) if wf_active else set()
+    orphans = [
+        r.workflow_state for r in frappe.db.sql(
+            "select distinct workflow_state from `tabMaterial Request` "
+            "where ifnull(workflow_state,'')!=''", as_dict=1)
+        if r.workflow_state not in valid
+    ]
+    ck("no orphan MR workflow states", not orphans, orphans)
+
+    # 4. Gate doctypes + tables exist.
+    for dt in ("Gate Entry", "Direct Inward Receipt"):
+        ck(f"doctype {dt} table exists",
+           frappe.db.exists("DocType", dt) and frappe.db.table_exists(dt))
+
+    # 5. Per-role permission matrix (incl. a negative control).
+    for role, dt, ptype, expected in HEALTH_PERM_EXPECT:
+        u = _a_user_with_role(role)
+        if not u:
+            ck(f"perm {role}:{dt}.{ptype}", False, "no user holds this role")
+            continue
+        got = bool(frappe.has_permission(dt, ptype, user=u))
+        ck(f"perm {role}:{dt}.{ptype}=={expected}", got == expected, f"user={u} got={got}")
+
+    # 6. Dropdowns actually return rows for a requester (proves link_filter +
+    #    Company User Permission + read perm all line up).
+    hod = _a_user_with_role("School HOD")
+    if hod:
+        frappe.set_user(hod)
+        try:
+            nd = len(frappe.get_list("Department", filters={"company": company}, limit_page_length=0))
+            ncc = len(frappe.get_list("Cost Center", filters={"company": company, "is_group": 0}, limit_page_length=0))
+        finally:
+            frappe.set_user("Administrator")
+        ck("HOD sees Departments (dropdown)", nd > 0, f"{nd} visible")
+        ck("HOD sees Cost Centers (dropdown)", ncc > 0, f"{ncc} visible")
+    else:
+        ck("HOD dropdown check", False, "no School HOD user")
+
+    # 7. Every enabled School system user has a Company User Permission.
+    school_users = set()
+    for prof in ROLE_PROFILES:
+        for r in frappe.get_all("Has Role", filters={"role": prof}, fields=["parent"]):
+            school_users.add(r.parent)
+    missing_up = [
+        u for u in school_users
+        if u not in ("Administrator", "Guest")
+        and frappe.db.get_value("User", u, "enabled")
+        and not frappe.db.exists("User Permission", {"user": u, "allow": "Company"})
+    ]
+    ck("all School users have Company User Permission", not missing_up, missing_up)
+
+    # 8. No School user is missing built-in profile roles (assign_full would be a no-op).
+    missing_builtin = []
+    for prof, roles in ROLE_PROFILES.items():
+        for r in frappe.get_all("Has Role", filters={"role": prof}, fields=["parent"]):
+            u = r.parent
+            if u in ("Administrator", "Guest") or not frappe.db.get_value("User", u, "enabled"):
+                continue
+            have = set(x.role for x in frappe.get_all("Has Role", filters={"parent": u}, fields=["role"]))
+            gaps = [x for x in roles if x not in have]
+            if gaps:
+                missing_builtin.append(f"{u}:{gaps}")
+    ck("all School users have full profile roles", not missing_builtin, missing_builtin[:10])
+
+    failed = [c for c in checks if not c["ok"]]
+    if verbose:
+        for c in checks:
+            print(f"  [{'OK ' if c['ok'] else 'FAIL'}] {c['check']}"
+                  + (f"  -- {c['detail']}" if not c["ok"] else ""))
+    if failed:
+        print(f"HEALTHCHECK FAIL: {len(failed)}/{len(checks)} checks failed -> "
+              + "; ".join(c["check"] for c in failed))
+    else:
+        print(f"HEALTHCHECK PASS: all {len(checks)} checks passed (company={company})")
+    return {"passed": len(checks) - len(failed), "failed": len(failed),
+            "ok": not failed, "failures": failed}
