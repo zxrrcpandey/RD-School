@@ -104,13 +104,15 @@ class GateEntry(Document):
 		dir_doc.insert(ignore_permissions=True)
 		self.db_set("linked_direct_inward", dir_doc.name)
 		self.db_set("status", "Sent to Reception")
+		# Notify Reception against the Direct Inward Receipt (NOT the Gate
+		# Entry) so clicking the bell alert opens the receipt they must action.
 		_notify_role(
-			"School Reception", self,
-			f"Direct Inward {dir_doc.name}: parcel at reception",
+			"School Reception", dir_doc,
+			f"Parcel at reception — {dir_doc.name}",
 			f"<p>A direct delivery ({self.number_of_packages} {self.package_type}) "
 			f"from {self.party_name} for department "
-			f"{self.destination_department} is at reception. Open "
-			f"<b>{dir_doc.name}</b> and notify the department.</p>",
+			f"{self.destination_department} is at reception. Open this receipt "
+			f"and click <b>Notify Department</b>.</p>",
 		)
 		return dir_doc.name
 
