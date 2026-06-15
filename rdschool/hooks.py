@@ -55,11 +55,26 @@ fixtures = [
     },
     {
         "doctype": "Workflow State",
-        "filters": [["name", "in", ["Pending Approval"]]],
+        "filters": [["name", "in", [
+            "Draft", "Pending VP Review", "Pending Store Verification",
+            "RFQ In Progress", "Pending Principal Decision", "On Hold",
+            "Approved", "Rejected", "Closed",
+        ]]],
     },
     {
         "doctype": "Workflow Action Master",
-        "filters": [["name", "in", ["Submit for Approval", "Approve", "Reject"]]],
+        "filters": [["name", "in", [
+            "Submit for VP Review", "Accept → Store",
+            "Accept → Direct (Exemption)", "Revise (send to HOD)", "Reject",
+            "In-Stock → Principal", "Out-of-Stock → Raise RFQ",
+            "Comparison Ready → Principal", "Accept (authorize PO)", "Hold",
+            "Revise → VP", "Reject (close file)", "Resume → Decision",
+            "Resubmit (reopen)",
+        ]]],
+    },
+    {
+        "doctype": "Notification",
+        "filters": [["name", "like", "MR %- RSB"]],
     },
 ]
 

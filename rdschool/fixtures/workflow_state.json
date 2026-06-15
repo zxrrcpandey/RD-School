@@ -2,10 +2,82 @@
  {
   "docstatus": 0,
   "doctype": "Workflow State",
+  "icon": "ok-sign",
+  "modified": "2026-05-25 13:18:53.496844",
+  "name": "Approved",
+  "style": "Success",
+  "workflow_state_name": "Approved"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "remove",
+  "modified": "2026-05-25 13:18:53.497491",
+  "name": "Rejected",
+  "style": "Danger",
+  "workflow_state_name": "Rejected"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
   "icon": "",
-  "modified": "2026-05-25 14:54:50.350824",
-  "name": "Pending Approval",
+  "modified": "2026-05-25 14:54:50.341445",
+  "name": "Draft",
+  "style": "Primary",
+  "workflow_state_name": "Draft"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2026-06-15 13:57:05.299809",
+  "name": "RFQ In Progress",
+  "style": "Info",
+  "workflow_state_name": "RFQ In Progress"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2026-06-15 13:57:05.304625",
+  "name": "On Hold",
   "style": "Warning",
-  "workflow_state_name": "Pending Approval"
+  "workflow_state_name": "On Hold"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2026-06-15 13:57:05.305494",
+  "name": "Closed",
+  "style": "Danger",
+  "workflow_state_name": "Closed"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2026-06-15 13:57:05.306470",
+  "name": "Pending VP Review",
+  "style": "Warning",
+  "workflow_state_name": "Pending VP Review"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2026-06-15 13:57:05.307341",
+  "name": "Pending Principal Decision",
+  "style": "Warning",
+  "workflow_state_name": "Pending Principal Decision"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2026-06-15 13:57:05.308412",
+  "name": "Pending Store Verification",
+  "style": "Info",
+  "workflow_state_name": "Pending Store Verification"
  }
 ]

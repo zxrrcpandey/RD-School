@@ -2,13 +2,6 @@
  {
   "docstatus": 0,
   "doctype": "Workflow Action Master",
-  "modified": "2026-05-25 13:18:53.503192",
-  "name": "Approve",
-  "workflow_action_name": "Approve"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow Action Master",
   "modified": "2026-05-25 13:18:53.503913",
   "name": "Reject",
   "workflow_action_name": "Reject"
@@ -16,8 +9,92 @@
  {
   "docstatus": 0,
   "doctype": "Workflow Action Master",
-  "modified": "2026-05-25 14:54:50.360312",
-  "name": "Submit for Approval",
-  "workflow_action_name": "Submit for Approval"
+  "modified": "2026-06-15 13:57:05.315849",
+  "name": "Out-of-Stock → Raise RFQ",
+  "workflow_action_name": "Out-of-Stock → Raise RFQ"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.319076",
+  "name": "Resubmit (reopen)",
+  "workflow_action_name": "Resubmit (reopen)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.319742",
+  "name": "Comparison Ready → Principal",
+  "workflow_action_name": "Comparison Ready → Principal"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.320371",
+  "name": "Resume → Decision",
+  "workflow_action_name": "Resume → Decision"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.321014",
+  "name": "Accept → Direct (Exemption)",
+  "workflow_action_name": "Accept → Direct (Exemption)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.321642",
+  "name": "Revise → VP",
+  "workflow_action_name": "Revise → VP"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.322267",
+  "name": "Hold",
+  "workflow_action_name": "Hold"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.323260",
+  "name": "Accept (authorize PO)",
+  "workflow_action_name": "Accept (authorize PO)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.323927",
+  "name": "Revise (send to HOD)",
+  "workflow_action_name": "Revise (send to HOD)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.324704",
+  "name": "Submit for VP Review",
+  "workflow_action_name": "Submit for VP Review"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.325323",
+  "name": "In-Stock → Principal",
+  "workflow_action_name": "In-Stock → Principal"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.325984",
+  "name": "Accept → Store",
+  "workflow_action_name": "Accept → Store"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
+  "modified": "2026-06-15 13:57:05.326599",
+  "name": "Reject (close file)",
+  "workflow_action_name": "Reject (close file)"
  }
 ]

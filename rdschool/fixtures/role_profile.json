@@ -83,7 +83,7 @@
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-05-25 14:39:34.472790",
+  "modified": "2026-06-15 13:57:03.733393",
   "name": "School Stores Incharge",
   "role_profile": "School Stores Incharge",
   "roles": [
@@ -110,6 +110,12 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Item Manager"
+   },
+   {
+    "parent": "School Stores Incharge",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Purchase Manager"
    }
   ]
  },
@@ -158,6 +164,84 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Auditor"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-06-15 13:57:03.615541",
+  "name": "School Vice Principal",
+  "role_profile": "School Vice Principal",
+  "roles": [
+   {
+    "parent": "School Vice Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   },
+   {
+    "parent": "School Vice Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Stock User"
+   },
+   {
+    "parent": "School Vice Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Purchase User"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-06-15 13:57:03.722129",
+  "name": "School Director",
+  "role_profile": "School Director",
+  "roles": [
+   {
+    "parent": "School Director",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   },
+   {
+    "parent": "School Director",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Purchase Manager"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-06-15 13:57:03.724827",
+  "name": "School Gate Security",
+  "role_profile": "School Gate Security",
+  "roles": [
+   {
+    "parent": "School Gate Security",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Role Profile",
+  "modified": "2026-06-15 13:57:03.726174",
+  "name": "School Reception",
+  "role_profile": "School Reception",
+  "roles": [
+   {
+    "parent": "School Reception",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Employee"
    }
   ]
  }
