@@ -1139,9 +1139,47 @@ def create_mr_custom_fields():
             if "link_filters" in f and "{company}" in f["link_filters"]:
                 f["link_filters"] = f["link_filters"].format(company=company)
     create_custom_fields(fields, ignore_validate=True)
+    relocalize_company_link_filters()
     print(
         f"create_mr_custom_fields: ensured {sum(len(v) for v in fields.values())} fields"
     )
+
+
+def relocalize_company_link_filters():
+    """Re-point company-specific `link_filters` on the MR link fields to the
+    LOCAL company.
+
+    link_filters are company-specific, but they are EXPORTED to fixtures with
+    the export-site's company baked in (dev = 'RD School Betul'). A `bench
+    migrate` on a differently-named company (prod = 'RDPS Betul') imports the
+    fixture and clobbers the filter, so the Department/Cost Center dropdowns
+    silently return nothing. Wired into `after_migrate` (hooks.py) so every
+    fixtures import is auto-corrected to the local company.
+    """
+    try:
+        company = _company()
+    except Exception:
+        return  # no company yet (e.g. pre-wizard) — nothing to localize
+    mapping = {
+        "rsb_school_department": (
+            f'[["Department","company","=","{company}"]]'
+        ),
+        "rsb_cost_center": (
+            f'[["Cost Center","company","=","{company}"],'
+            f'["Cost Center","is_group","=",0]]'
+        ),
+    }
+    fixed = 0
+    for fieldname, lf in mapping.items():
+        name = frappe.db.get_value(
+            "Custom Field", {"dt": "Material Request", "fieldname": fieldname}, "name"
+        )
+        if name and frappe.db.get_value("Custom Field", name, "link_filters") != lf:
+            frappe.db.set_value("Custom Field", name, "link_filters", lf)
+            fixed += 1
+    if fixed:
+        frappe.clear_cache(doctype="Material Request")
+    print(f"relocalize_company_link_filters: fixed {fixed} (company={company})")
 
 
 # ---------------------------------------------------------------------------

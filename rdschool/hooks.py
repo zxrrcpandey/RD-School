@@ -9,6 +9,11 @@ app_license = "mit"
 # Auto-seed masters & customizations on a fresh install.
 after_install = "rdschool.setup_data.setup_all"
 
+# After every migrate, re-localize company-specific link_filters that the
+# fixtures import bakes with the export-site's company name (else the
+# Department/Cost Center dropdowns break on a differently-named company).
+after_migrate = "rdschool.setup_data.relocalize_company_link_filters"
+
 
 # Per-doctype event handlers.
 doc_events = {
