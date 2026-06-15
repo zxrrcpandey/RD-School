@@ -42,5 +42,34 @@ frappe.ui.form.on("Material Request", {
 				__("Create")
 			);
 		}
+
+		// On an Approved MR with a chosen quotation, create the PO FROM that
+		// Supplier Quotation (carries negotiated rates + links PO↔SQ). This is
+		// preferred over the native MR→PO button when a quote was selected.
+		if (
+			frm.doc.workflow_state === "Approved" &&
+			frm.doc.rsb_selected_supplier_quotation &&
+			(frappe.user_roles.includes("School Stores Incharge") ||
+				frappe.user_roles.includes("Purchase Manager"))
+		) {
+			frm.add_custom_button(
+				__("PO from Selected Quotation"),
+				() => {
+					frappe.call({
+						method: "rdschool.material_request.make_po_from_selected_quotation",
+						args: { material_request: frm.doc.name },
+						freeze: true,
+						freeze_message: __("Creating Purchase Order from the quotation…"),
+						callback: (r) => {
+							if (r.message) {
+								frappe.model.sync(r.message);
+								frappe.set_route("Form", r.message.doctype, r.message.name);
+							}
+						},
+					});
+				},
+				__("Create")
+			).addClass("btn-primary");
+		}
 	},
 });

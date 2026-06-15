@@ -94,3 +94,30 @@ def make_rfq_from_mr(material_request):
     mr.db_set("rsb_request_for_quotation", rfq.name)
 
     return rfq.name
+
+
+@frappe.whitelist()
+def make_po_from_selected_quotation(material_request):
+    """Create a Purchase Order from the MR's CHOSEN Supplier Quotation.
+
+    The native Supplier Quotation -> PO mapper carries the negotiated rates and
+    links each PO item back to the Supplier Quotation (PO Item.supplier_quotation
+    / supplier_quotation_item). Creating the PO from the bare MR instead loses
+    both, which is why the accepted quote wasn't linked to the PO.
+    """
+    mr = frappe.get_doc("Material Request", material_request)
+    sq = mr.get("rsb_selected_supplier_quotation")
+    if not sq:
+        frappe.throw(
+            _("Set 'Selected Supplier Quotation' on this Material Request first.")
+        )
+    if frappe.db.get_value("Supplier Quotation", sq, "docstatus") != 1:
+        frappe.throw(_("The selected Supplier Quotation {0} must be submitted.").format(sq))
+
+    from erpnext.buying.doctype.supplier_quotation.supplier_quotation import (
+        make_purchase_order as _mpo_from_sq,
+    )
+
+    # PO items are linked to the SQ by the native mapper; the SQ traces back to
+    # the MR via the RFQ chain, so no extra MR tag is needed on the PO.
+    return _mpo_from_sq(sq)

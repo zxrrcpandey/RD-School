@@ -27,10 +27,13 @@ def _advance_gate(gate_entry, status, notify_role=None, subject=None, message=No
 
 
 def purchase_receipt_on_submit(doc, method=None):
-	"""A2 done — GRN logged. Advance the linked Gate Entry, notify Accounts."""
+	"""A2 done — GRN logged. Advance the linked Gate Entry, record the PR link
+	(so the Create-PR button hides), and notify Accounts."""
 	gate_entry = doc.get("gate_entry")
-	if not gate_entry:
+	if not gate_entry or not frappe.db.exists("Gate Entry", gate_entry):
 		return
+	# Authoritative moment to stamp the back-link (PR is named + persisted).
+	frappe.db.set_value("Gate Entry", gate_entry, "linked_purchase_receipt", doc.name)
 	_advance_gate(
 		gate_entry,
 		"Receipt Created",

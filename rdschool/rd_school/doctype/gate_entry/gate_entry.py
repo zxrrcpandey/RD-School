@@ -27,12 +27,27 @@ class GateEntry(Document):
 			if not self.destination_department:
 				frappe.throw(_("Select the Destination Department for a Direct Inward."))
 
-		# Block flipping the route once a downstream record exists.
-		if not self.is_new():
+		# Once the entry has left the gate (status advanced) it is a locked
+		# record — block edits to the consignment/routing fields so it can't be
+		# altered after a PR/PI or department routing has happened.
+		if not self.is_new() and self.status not in ("At Gate",):
 			before = self.get_doc_before_save()
-			if before and before.inward_type and before.inward_type != self.inward_type:
-				if self.linked_purchase_receipt or self.linked_direct_inward:
-					frappe.throw(_("Cannot change Inward Type after a linked record exists."))
+			if before:
+				locked = [
+					"inward_type", "number_of_packages", "package_type",
+					"party_name", "supplier", "purchase_order",
+					"destination_department", "vehicle_no",
+				]
+				changed = [
+					f for f in locked if (self.get(f) or "") != (before.get(f) or "")
+				]
+				if changed:
+					frappe.throw(
+						_("This Gate Entry has advanced (status: {0}) and can no "
+						  "longer be edited. Changed: {1}").format(
+							self.status, ", ".join(changed)
+						)
+					)
 
 	@frappe.whitelist()
 	def route_to_store(self):

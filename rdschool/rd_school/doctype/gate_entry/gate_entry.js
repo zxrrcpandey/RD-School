@@ -10,6 +10,11 @@ frappe.ui.form.on("Gate Entry", {
 	refresh(frm) {
 		if (frm.is_new()) return;
 
+		// No actions on terminal statuses — keeps stale buttons from showing.
+		if (["Closed - Paid", "Closed - Direct", "Cancelled"].includes(frm.doc.status)) {
+			return;
+		}
+
 		// Route A: PO Inward
 		if (frm.doc.inward_type === "PO Inward") {
 			if (frm.doc.status === "At Gate") {

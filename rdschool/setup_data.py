@@ -555,6 +555,7 @@ def setup_all():
     create_role_profiles()
     ensure_role_profile_roles()  # upgrade existing profiles to match declared roles
     create_school_roles_and_assign()  # Roles only; users are demo data
+    assign_full_profile_roles()  # backfill built-in roles for all School users
     rebuild_school_docperms()  # authoritative (handles upgrades, not just new)
     ensure_company_user_permissions()
     create_item_groups()
@@ -838,6 +839,58 @@ def create_school_roles_and_assign():
         f"create_school_roles_and_assign: created {created_roles} roles, "
         f"assigned to {assigned} users"
     )
+
+
+def assign_full_profile_roles():
+    """Backfill EVERY School user with the FULL set of roles from their matching
+    Role Profile (built-ins like Stock Manager / Purchase Manager included).
+
+    Why: users assigned only their 'School X' role via a direct Has Role insert
+    (the v15-reliable path) never received the profile's built-in roles, so they
+    lacked ERPNext access to Stock reports (Stock Manager) and Supplier
+    Quotation (Purchase Manager). Demo/test users created WITH role_profile_name
+    got them via sync. This makes every School user consistent — direct Has Role
+    inserts, no reliance on User.save profile sync. Idempotent.
+
+    A user is a "School user" if they hold any 'School %' role OR their
+    role_profile_name is one of our profiles.
+    """
+    inserted = 0
+    for profile_name, roles in ROLE_PROFILES.items():
+        # users whose role_profile is this profile, OR who hold this School role
+        users = set(
+            u.name
+            for u in frappe.get_all(
+                "User", filters={"role_profile_name": profile_name}, fields=["name"]
+            )
+        )
+        users |= set(
+            r.parent
+            for r in frappe.get_all(
+                "Has Role", filters={"role": profile_name}, fields=["parent"]
+            )
+        )
+        users.discard("Administrator")
+        users.discard("Guest")
+        for user in users:
+            if not frappe.db.exists("User", user):
+                continue
+            for role in roles:
+                if not frappe.db.exists("Role", role):
+                    continue
+                if not frappe.db.exists("Has Role", {"parent": user, "role": role}):
+                    frappe.get_doc(
+                        {
+                            "doctype": "Has Role",
+                            "parent": user,
+                            "parenttype": "User",
+                            "parentfield": "roles",
+                            "role": role,
+                        }
+                    ).insert(ignore_permissions=True)
+                    inserted += 1
+    frappe.clear_cache()
+    print(f"assign_full_profile_roles: inserted {inserted} missing Has Role rows")
 
 
 def create_supplier_groups():
@@ -1724,3 +1777,106 @@ def run_gate_uat():
     frappe.set_user("Administrator")
     print("[GATE] BOTH ROUTES PASSED")
     return {"route_a_gate": ge.name, "route_b_gate": geb.name, "dir": dir_name}
+
+
+def run_fixes_regression():
+    """Regression for the Phase-F/issue fixes: SQ->PO linkage (#3) and the
+    gate linked_purchase_receipt + edit-lock (#4b/#4c)."""
+    from frappe.utils import today, add_days
+    from frappe.model.workflow import apply_workflow
+    from rdschool import material_request as mrmod
+    from erpnext.buying.doctype.request_for_quotation.request_for_quotation import (
+        make_supplier_quotation_from_rfq,
+    )
+    from erpnext.buying.doctype.purchase_order.purchase_order import (
+        make_purchase_receipt,
+    )
+
+    company = _company()
+    wh = DEFAULT_WAREHOUSE
+    abbr = _abbr()
+    supplier = "MP Lab Supplies Indore"
+    hod, vp, principal, stores, gate = (
+        "hod1@rdschool.local", "vp@rdschool.local", "principal@rdschool.local",
+        "stores@rdschool.local", "gate@rdschool.local",
+    )
+    dept = frappe.db.get_value(
+        "Department", {"department_name": "Science Lab", "company": company}, "name"
+    )
+
+    def su(u):
+        frappe.clear_cache(user=u)
+        frappe.set_user(u)
+
+    # --- #3: MR -> RFQ -> SQ -> PO-from-SQ ---
+    su(hod)
+    mr = frappe.get_doc({
+        "doctype": "Material Request", "material_request_type": "Purchase",
+        "transaction_date": today(), "schedule_date": add_days(today(), 7),
+        "company": company, "rsb_school_department": dept,
+        "rsb_cost_center": f"Science Lab - {abbr}", "rsb_academic_year": "2026-2027",
+        "rsb_reason_for_request": "SQ->PO regression", "rsb_purchase_category": "Standard",
+        "items": [{"item_code": "RSB-LAB-001", "qty": 6,
+                   "schedule_date": add_days(today(), 7), "warehouse": wh}],
+    })
+    mr.insert()
+    apply_workflow(mr, "Submit for VP Review")
+    su(vp); mr.reload(); apply_workflow(mr, "Accept → Store")
+    su(stores); mr.reload(); mr.rsb_stock_availability = "Out of Stock"; mr.save()
+    apply_workflow(mr, "Out-of-Stock → Raise RFQ"); mr.reload()
+    rfq_name = mrmod.make_rfq_from_mr(mr.name)
+    rfq = frappe.get_doc("Request for Quotation", rfq_name)
+    rfq.append("suppliers", {"supplier": supplier})
+    rfq.save(); rfq.submit()
+    sq = frappe.get_doc(make_supplier_quotation_from_rfq(rfq.name, for_supplier=supplier))
+    for it in sq.items:
+        it.rate = 80
+    sq.insert(); sq.submit()
+    mr.reload(); mr.rsb_selected_supplier_quotation = sq.name; mr.save()
+    apply_workflow(mr, "Comparison Ready → Principal")
+    su(principal); mr.reload(); apply_workflow(mr, "Accept (authorize PO)"); mr.reload()
+    su(stores)
+    po = frappe.get_doc(mrmod.make_po_from_selected_quotation(mr.name))
+    po.insert(); po.submit()
+    sq_links = sorted(set(i.supplier_quotation for i in po.items))
+    print(f"[FIXREG] #3 PO {po.name} from SQ; item SQ links={sq_links} rate={po.items[0].rate}")
+    assert sq.name in sq_links, "PO item not linked to SQ"
+
+    # --- #4c: gate linked_purchase_receipt set on PR submit ---
+    su(stores)
+    po2 = frappe.get_doc({
+        "doctype": "Purchase Order", "supplier": supplier, "company": company,
+        "schedule_date": add_days(today(), 5), "transaction_date": today(),
+        "items": [{"item_code": "RSB-LAB-001", "qty": 4, "rate": 75,
+                   "schedule_date": add_days(today(), 5), "warehouse": wh}],
+    })
+    po2.insert(); po2.submit()
+    su(gate)
+    ge = frappe.get_doc({
+        "doctype": "Gate Entry", "company": company, "inward_type": "PO Inward",
+        "number_of_packages": 2, "package_type": "Boxes",
+        "party_name": supplier, "purchase_order": po2.name,
+    })
+    ge.insert(); ge.route_to_store(); ge.reload()
+    su(stores)
+    ge2 = frappe.get_doc("Gate Entry", ge.name)
+    pr = frappe.get_doc(ge2.make_purchase_receipt())
+    for it in pr.items:
+        it.warehouse = wh
+    pr.insert(); pr.submit(); ge2.reload()
+    print(f"[FIXREG] #4c gate {ge2.name} status={ge2.status} linked_pr={ge2.linked_purchase_receipt}")
+    assert ge2.linked_purchase_receipt == pr.name, "linked_purchase_receipt not set"
+
+    # --- #4b: edit-lock after advance ---
+    locked_ok = False
+    try:
+        ge2.number_of_packages = 99
+        ge2.save()
+    except Exception:
+        locked_ok = True
+    print(f"[FIXREG] #4b edit-lock after advance enforced={locked_ok}")
+    assert locked_ok, "edit-lock not enforced"
+
+    frappe.set_user("Administrator"); frappe.db.commit()
+    print("[FIXREG] ALL PASSED")
+    return {"po_from_sq": po.name, "gate": ge2.name}

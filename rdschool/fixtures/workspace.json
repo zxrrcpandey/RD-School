@@ -1,0 +1,99 @@
+[
+ {
+  "charts": [],
+  "content": "[{\"id\": \"gihdr\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Gate Inward (G1)</b></span>\", \"col\": 12}}, {\"id\": \"gisc1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"New Gate Entry\", \"col\": 4}}, {\"id\": \"gisc2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entries\", \"col\": 4}}, {\"id\": \"gisc3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Direct Inward Receipts\", \"col\": 4}}]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "for_user": null,
+  "hide_custom": 0,
+  "icon": "box",
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Gate Inward",
+  "links": [],
+  "modified": "2026-06-15 17:48:56.944338",
+  "module": "RD School",
+  "name": "Gate Inward",
+  "number_cards": [],
+  "parent_page": null,
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": null,
+  "roles": [
+   {
+    "parent": "Gate Inward",
+    "parentfield": "roles",
+    "parenttype": "Workspace",
+    "role": "School Gate Security"
+   },
+   {
+    "parent": "Gate Inward",
+    "parentfield": "roles",
+    "parenttype": "Workspace",
+    "role": "School Reception"
+   },
+   {
+    "parent": "Gate Inward",
+    "parentfield": "roles",
+    "parenttype": "Workspace",
+    "role": "School Stores Incharge"
+   }
+  ],
+  "sequence_id": 0.0,
+  "shortcuts": [
+   {
+    "color": "Green",
+    "doc_view": "New",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "New Gate Entry",
+    "link_to": "Gate Entry",
+    "parent": "Gate Inward",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": "Blue",
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Gate Entries",
+    "link_to": "Gate Entry",
+    "parent": "Gate Inward",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": "Orange",
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Direct Inward Receipts",
+    "link_to": "Direct Inward Receipt",
+    "parent": "Gate Inward",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   }
+  ],
+  "title": "Gate Inward"
+ }
+]

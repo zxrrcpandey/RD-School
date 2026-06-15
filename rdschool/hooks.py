@@ -91,6 +91,10 @@ fixtures = [
         "doctype": "Notification",
         "filters": [["name", "like", "MR %- RSB"]],
     },
+    {
+        "doctype": "Workspace",
+        "filters": [["name", "=", "Gate Inward"]],
+    },
 ]
 
 # Apps
