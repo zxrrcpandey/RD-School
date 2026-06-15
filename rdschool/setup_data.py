@@ -186,6 +186,11 @@ SCHOOL_ROLE_DOCPERMS = {
         }),
         # Read on PO so the Buying workspace opens without a permission error.
         ("Purchase Order", {"read": 1, "report": 1}),
+        # The MR form carries Link fields to RFQ / Supplier Quotation (set by
+        # Store on the out-of-stock branch). The Link controls need read on the
+        # target doctype to render, even though requesters never edit them.
+        ("Request for Quotation", {"read": 1}),
+        ("Supplier Quotation", {"read": 1}),
     ],
     "School HOD": [
         ("Department", {"read": 1}),
@@ -201,6 +206,9 @@ SCHOOL_ROLE_DOCPERMS = {
         # Read on PO so the Buying workspace (which auto-loads PO charts) opens
         # without a permission error, and HOD can track requisitions downstream.
         ("Purchase Order", {"read": 1, "report": 1}),
+        # Render the MR's RFQ / Supplier Quotation link fields without error.
+        ("Request for Quotation", {"read": 1}),
+        ("Supplier Quotation", {"read": 1}),
     ],
     "School Principal": [
         ("Department", {"read": 1}),
@@ -213,6 +221,8 @@ SCHOOL_ROLE_DOCPERMS = {
             "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
             "print": 1, "email": 1, "report": 1,
         }),
+        ("Request for Quotation", {"read": 1, "report": 1}),
+        ("Supplier Quotation", {"read": 1, "report": 1}),
         ("Purchase Order", {"read": 1, "print": 1, "email": 1, "report": 1}),
         ("Purchase Receipt", {"read": 1, "print": 1, "email": 1, "report": 1}),
         ("Purchase Invoice", {"read": 1, "print": 1, "email": 1, "report": 1}),
@@ -250,6 +260,8 @@ SCHOOL_ROLE_DOCPERMS = {
         ("Item", {"read": 1}),
         ("Supplier", {"read": 1, "write": 1, "create": 1}),
         ("Material Request", {"read": 1, "print": 1, "report": 1}),
+        ("Request for Quotation", {"read": 1, "report": 1}),
+        ("Supplier Quotation", {"read": 1, "report": 1}),
         ("Purchase Order", {"read": 1, "print": 1, "report": 1}),
         ("Purchase Receipt", {"read": 1, "print": 1, "report": 1}),
         ("Purchase Invoice", {
@@ -286,6 +298,7 @@ SCHOOL_ROLE_DOCPERMS = {
         # no create/submit (VP reviews, does not raise or finalize).
         ("Material Request", {"read": 1, "write": 1, "print": 1, "report": 1}),
         ("Request for Quotation", {"read": 1, "report": 1}),
+        ("Supplier Quotation", {"read": 1, "report": 1}),
         ("Purchase Order", {"read": 1, "report": 1}),
     ],
     "School Director": [
