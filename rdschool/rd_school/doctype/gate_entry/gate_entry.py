@@ -74,6 +74,16 @@ class GateEntry(Document):
 			frappe.throw(_("No Purchase Order linked."))
 		if self.linked_purchase_receipt:
 			frappe.throw(_("A Purchase Receipt {0} is already linked.").format(self.linked_purchase_receipt))
+		if self.status != "Routed to Store":
+			frappe.throw(_("Route the consignment to Store before creating a Purchase Receipt."))
+		# Close the create-then-not-yet-submitted window: linked_purchase_receipt
+		# is only stamped on PR submit, so also block if a non-cancelled PR
+		# already references this Gate Entry (prevents a duplicate draft PR).
+		existing = frappe.db.exists(
+			"Purchase Receipt", {"gate_entry": self.name, "docstatus": ["<", 2]}
+		)
+		if existing:
+			frappe.throw(_("A Purchase Receipt ({0}) already exists for this Gate Entry.").format(existing))
 		from erpnext.buying.doctype.purchase_order.purchase_order import (
 			make_purchase_receipt as _mpr,
 		)

@@ -132,7 +132,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "At Reception\nAwaiting Department\nReceived by Department\nClosed - Received\nCancelled",
+   "options": "At Reception\nAwaiting Department\nClosed - Received\nCancelled",
    "read_only": 1
   }
  ],
