@@ -51,17 +51,25 @@ DEPARTMENTS = [
     "IT",
 ]
 
+# IMPORTANT: each profile's role list includes its OWN namesake "School X"
+# role as the FIRST entry. Frappe v15 syncs a user's roles from
+# role_profile_name on save and would otherwise WIPE the manually-assigned
+# School role (the workflow gates on it). Keeping the namesake role inside the
+# profile makes the sync preserve it.
 ROLE_PROFILES = {
     "School Teacher": [
+        "School Teacher",
         "Employee",
         "Stock User",
     ],
     "School HOD": [
+        "School HOD",
         "Employee",
         "Stock User",
         "Purchase User",
     ],
     "School Principal": [
+        "School Principal",
         "Employee",
         "Stock Manager",
         "Purchase Manager",
@@ -72,22 +80,26 @@ ROLE_PROFILES = {
     # renaming the Role would break those. Profile upgraded to Purchase
     # Manager (was Purchase User) to cover PO release per the new SOP.
     "School Stores Incharge": [
+        "School Stores Incharge",
         "Employee",
         "Stock Manager",
         "Purchase Manager",
         "Item Manager",
     ],
     "School Accountant": [
+        "School Accountant",
         "Employee",
         "Accounts User",
         "Purchase User",
     ],
     "School Auditor": [
+        "School Auditor",
         "Employee",
         "Auditor",
     ],
     # --- New roles for the multi-stage SOP (Phase A of the redesign) ---
     "School Vice Principal": [
+        "School Vice Principal",
         "Employee",
         "Stock User",
         "Purchase User",
@@ -95,15 +107,18 @@ ROLE_PROFILES = {
     # Thin co-approver at the Principal gate (combined Principal+Director gate;
     # either may act). Optional person — harmless if unused.
     "School Director": [
+        "School Director",
         "Employee",
         "Purchase Manager",
     ],
     # G1 gate security: minimal desk access; scoped by DocPerm to Gate Entry.
     "School Gate Security": [
+        "School Gate Security",
         "Employee",
     ],
     # Reception desk for the direct-inward route.
     "School Reception": [
+        "School Reception",
         "Employee",
     ],
 }
@@ -486,10 +501,52 @@ def setup_all():
     create_mr_workflow()
     migrate_mr_workflow_states()  # remap any in-flight MRs to the new states
     create_mr_notifications()
+    create_gate_custom_fields()  # Phase D/E: PR back-link + Department in-charge
     if frappe.conf.get("rdschool_seed_demo_data"):
         seed_demo_data()
     frappe.db.commit()
     print("setup_all: complete")
+
+
+# ---------------------------------------------------------------------------
+# Phase D/E: Gate-inward supporting custom fields
+# ---------------------------------------------------------------------------
+
+GATE_SUPPORT_FIELDS = {
+    "Purchase Receipt": [
+        {
+            "fieldname": "gate_entry",
+            "label": "Gate Entry",
+            "fieldtype": "Link",
+            "options": "Gate Entry",
+            "read_only": 1,
+            "insert_after": "supplier",
+            "description": "Set automatically when the GRN is created from a G1 Gate Entry.",
+        },
+    ],
+    "Department": [
+        {
+            "fieldname": "rsb_department_incharge",
+            "label": "Department In-charge (for inward alerts)",
+            "fieldtype": "Link",
+            "options": "User",
+            "insert_after": "company",
+            "description": "Who gets the bell alert when a direct delivery is "
+            "routed to this department. Falls back to all HODs if unset.",
+        },
+    ],
+}
+
+
+def create_gate_custom_fields():
+    """Add the PR->Gate back-link and the Department in-charge field."""
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+    create_custom_fields(GATE_SUPPORT_FIELDS, ignore_validate=True)
+    print(
+        f"create_gate_custom_fields: ensured "
+        f"{sum(len(v) for v in GATE_SUPPORT_FIELDS.values())} fields"
+    )
 
 
 def seed_demo_data():
@@ -1476,3 +1533,106 @@ def run_uat():
         f"Total PI: {pi.grand_total} {pi.currency}"
     )
     return {"mr": mr.name, "po": po.name, "pr": pr.name, "pi": pi.name}
+
+
+def run_gate_uat():
+    """Exercise both G1 gate-inward routes end-to-end as the relevant users.
+
+    Route A (PO Inward): Gate -> Route to Store -> Purchase Receipt -> Invoice
+    -> Payment, auto-advancing Gate Entry status at each native submit.
+    Route B (Direct Inward): Gate -> Reception notify -> department acknowledge.
+    """
+    from frappe.utils import today, add_days
+    from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
+        make_purchase_invoice,
+    )
+    from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+
+    company = _company()
+    wh = DEFAULT_WAREHOUSE
+    gate, stores, accountant = "gate@rdschool.local", "stores@rdschool.local", "accountant@rdschool.local"
+    reception, hod = "reception@rdschool.local", "hod1@rdschool.local"
+    supplier = "MP Lab Supplies Indore"
+
+    def su(u):
+        frappe.clear_cache(user=u)
+        frappe.set_user(u)
+
+    # prep: a fresh PO in To-Receive state
+    su(stores)
+    po = frappe.get_doc(
+        {
+            "doctype": "Purchase Order", "supplier": supplier, "company": company,
+            "schedule_date": add_days(today(), 5), "transaction_date": today(),
+            "items": [{"item_code": "RSB-LAB-001", "qty": 10, "rate": 75,
+                       "schedule_date": add_days(today(), 5), "warehouse": wh}],
+        }
+    )
+    po.insert(); po.submit()
+    print(f"[GATE-A] prep PO {po.name} status={po.status}")
+
+    # ROUTE A
+    su(gate)
+    ge = frappe.get_doc(
+        {
+            "doctype": "Gate Entry", "company": company, "inward_type": "PO Inward",
+            "number_of_packages": 3, "package_type": "Boxes",
+            "party_name": supplier, "supplier": supplier, "purchase_order": po.name,
+        }
+    )
+    ge.insert()
+    print(f"[GATE-A] 1 {ge.name} status={ge.status}")
+    ge.route_to_store(); ge.reload()
+    print(f"[GATE-A] 2 route_to_store -> {ge.status}")
+
+    su(stores)
+    ge2 = frappe.get_doc("Gate Entry", ge.name)
+    pr = frappe.get_doc(ge2.make_purchase_receipt())
+    for it in pr.items:
+        it.warehouse = wh
+    pr.insert(); pr.submit(); ge2.reload()
+    print(f"[GATE-A] 3 PR {pr.name} (gate_entry={pr.gate_entry}) gate={ge2.status}")
+
+    su(accountant)
+    pi = frappe.get_doc(make_purchase_invoice(pr.name))
+    pi.bill_no = f"GB/{today()}"; pi.bill_date = today()
+    pi.insert(); pi.submit(); ge2.reload()
+    print(f"[GATE-A] 4 PI {pi.name} gate={ge2.status}")
+    pe = frappe.get_doc(get_payment_entry("Purchase Invoice", pi.name))
+    pe.reference_no = "UTR1"; pe.reference_date = today()
+    pe.insert(); pe.submit(); ge2.reload()
+    print(f"[GATE-A] 5 Payment {pe.name} gate={ge2.status}  <-- CLOSED")
+
+    # ROUTE B
+    su(gate)
+    lib = frappe.db.get_value(
+        "Department", {"department_name": "Library", "company": company}, "name"
+    )
+    geb = frappe.get_doc(
+        {
+            "doctype": "Gate Entry", "company": company, "inward_type": "Direct Inward",
+            "number_of_packages": 2, "package_type": "Packets",
+            "party_name": "Walk-in Courier", "destination_department": lib,
+        }
+    )
+    geb.insert()
+    print(f"[GATE-B] 1 {geb.name} status={geb.status} dept={lib}")
+    dir_name = geb.make_direct_inward(); geb.reload()
+    print(f"[GATE-B] 2 make_direct_inward -> {dir_name} gate={geb.status}")
+
+    su(reception)
+    dd = frappe.get_doc("Direct Inward Receipt", dir_name)
+    res = dd.notify_department(); dd.reload()
+    print(f"[GATE-B] 3 notify -> {dd.status} notified={res.get('notified')}")
+
+    su(hod)
+    dd2 = frappe.get_doc("Direct Inward Receipt", dir_name)
+    dd2.acknowledge_receipt(remarks="Received at library"); dd2.reload(); geb.reload()
+    print(
+        f"[GATE-B] 4 acknowledge -> DIR={dd2.status} by={dd2.received_by} "
+        f"gate={geb.status}  <-- CLOSED"
+    )
+
+    frappe.set_user("Administrator")
+    print("[GATE] BOTH ROUTES PASSED")
+    return {"route_a_gate": ge.name, "route_b_gate": geb.name, "dir": dir_name}

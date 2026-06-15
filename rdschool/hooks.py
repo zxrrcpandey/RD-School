@@ -23,6 +23,16 @@ doc_events = {
         # Department/Cost Center records without manual setup.
         "after_insert": "rdschool.setup_data.auto_add_company_user_permission",
     },
+    # Gate-inward (Route A) status auto-advance.
+    "Purchase Receipt": {
+        "on_submit": "rdschool.gate_inward.purchase_receipt_on_submit",
+    },
+    "Purchase Invoice": {
+        "on_submit": "rdschool.gate_inward.purchase_invoice_on_submit",
+    },
+    "Payment Entry": {
+        "on_submit": "rdschool.gate_inward.payment_entry_on_submit",
+    },
 }
 
 
@@ -40,6 +50,11 @@ fixtures = [
     {
         "doctype": "Custom Field",
         "filters": [["fieldname", "like", "rsb_%"]],
+    },
+    {
+        # Gate-inward back-link on Purchase Receipt (doesn't match rsb_ prefix).
+        "doctype": "Custom Field",
+        "filters": [["fieldname", "=", "gate_entry"]],
     },
     {
         "doctype": "Role",

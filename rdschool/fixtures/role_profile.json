@@ -2,7 +2,7 @@
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-05-25 14:39:34.455897",
+  "modified": "2026-06-15 15:01:53.128553",
   "name": "School Teacher",
   "role_profile": "School Teacher",
   "roles": [
@@ -17,13 +17,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Stock User"
+   },
+   {
+    "parent": "School Teacher",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Teacher"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-05-25 14:39:34.467655",
+  "modified": "2026-06-15 15:01:53.203548",
   "name": "School HOD",
   "role_profile": "School HOD",
   "roles": [
@@ -44,13 +50,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Purchase User"
+   },
+   {
+    "parent": "School HOD",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School HOD"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-05-25 14:39:34.469912",
+  "modified": "2026-06-15 15:01:53.209178",
   "name": "School Principal",
   "role_profile": "School Principal",
   "roles": [
@@ -77,13 +89,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Accounts Manager"
+   },
+   {
+    "parent": "School Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Principal"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-06-15 13:57:03.733393",
+  "modified": "2026-06-15 15:01:53.216758",
   "name": "School Stores Incharge",
   "role_profile": "School Stores Incharge",
   "roles": [
@@ -116,13 +134,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Purchase Manager"
+   },
+   {
+    "parent": "School Stores Incharge",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Stores Incharge"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-05-25 14:39:34.475068",
+  "modified": "2026-06-15 15:01:53.223784",
   "name": "School Accountant",
   "role_profile": "School Accountant",
   "roles": [
@@ -143,13 +167,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Purchase User"
+   },
+   {
+    "parent": "School Accountant",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Accountant"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-05-25 14:39:34.477746",
+  "modified": "2026-06-15 15:01:53.228607",
   "name": "School Auditor",
   "role_profile": "School Auditor",
   "roles": [
@@ -164,13 +194,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Auditor"
+   },
+   {
+    "parent": "School Auditor",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Auditor"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-06-15 13:57:03.615541",
+  "modified": "2026-06-15 15:01:53.233323",
   "name": "School Vice Principal",
   "role_profile": "School Vice Principal",
   "roles": [
@@ -191,13 +227,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Purchase User"
+   },
+   {
+    "parent": "School Vice Principal",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Vice Principal"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-06-15 13:57:03.722129",
+  "modified": "2026-06-15 15:01:53.237908",
   "name": "School Director",
   "role_profile": "School Director",
   "roles": [
@@ -212,13 +254,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Purchase Manager"
+   },
+   {
+    "parent": "School Director",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Director"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-06-15 13:57:03.724827",
+  "modified": "2026-06-15 15:01:53.242140",
   "name": "School Gate Security",
   "role_profile": "School Gate Security",
   "roles": [
@@ -227,13 +275,19 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Employee"
+   },
+   {
+    "parent": "School Gate Security",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Gate Security"
    }
   ]
  },
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-06-15 13:57:03.726174",
+  "modified": "2026-06-15 15:01:53.245953",
   "name": "School Reception",
   "role_profile": "School Reception",
   "roles": [
@@ -242,6 +296,12 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "Employee"
+   },
+   {
+    "parent": "School Reception",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "School Reception"
    }
   ]
  }
