@@ -26,6 +26,7 @@ doc_events = {
     # Gate-inward (Route A) status auto-advance.
     "Purchase Receipt": {
         "on_submit": "rdschool.gate_inward.purchase_receipt_on_submit",
+        "on_cancel": "rdschool.gate_inward.purchase_receipt_on_cancel",
     },
     "Purchase Invoice": {
         "on_submit": "rdschool.gate_inward.purchase_invoice_on_submit",
@@ -48,13 +49,14 @@ permission_query_conditions = {
 # --app rdschool` after changing any of these in the UI to refresh the JSON.
 fixtures = [
     {
+        # Captures all rsb_* custom fields (Material Request routing/RFQ fields
+        # + Department rsb_department_incharge). NOTE: do NOT add a second
+        # Custom Field fixture entry — export-fixtures writes one file per
+        # doctype, so a second entry OVERWRITES this one. The Purchase Receipt
+        # `gate_entry` back-link (non-rsb) is created by setup_data.
+        # create_gate_custom_fields() on install instead.
         "doctype": "Custom Field",
         "filters": [["fieldname", "like", "rsb_%"]],
-    },
-    {
-        # Gate-inward back-link on Purchase Receipt (doesn't match rsb_ prefix).
-        "doctype": "Custom Field",
-        "filters": [["fieldname", "=", "gate_entry"]],
     },
     {
         "doctype": "Role",

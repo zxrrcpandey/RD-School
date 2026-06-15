@@ -46,6 +46,18 @@ def purchase_receipt_on_submit(doc, method=None):
 	)
 
 
+def purchase_receipt_on_cancel(doc, method=None):
+	"""If a Gate-linked Purchase Receipt is cancelled, un-orphan the Gate Entry
+	so the Store can receive again (clear the link, roll status back to
+	'Routed to Store'). Only acts if this PR is the one currently linked."""
+	gate_entry = doc.get("gate_entry")
+	if not gate_entry or not frappe.db.exists("Gate Entry", gate_entry):
+		return
+	if frappe.db.get_value("Gate Entry", gate_entry, "linked_purchase_receipt") == doc.name:
+		frappe.db.set_value("Gate Entry", gate_entry, "linked_purchase_receipt", None)
+		frappe.db.set_value("Gate Entry", gate_entry, "status", "Routed to Store")
+
+
 def _gate_entry_from_pr(purchase_receipt):
 	if not purchase_receipt:
 		return None
