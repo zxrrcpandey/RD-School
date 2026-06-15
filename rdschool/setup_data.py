@@ -184,6 +184,8 @@ SCHOOL_ROLE_DOCPERMS = {
             "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
             "print": 1, "email": 1, "report": 1,
         }),
+        # Read on PO so the Buying workspace opens without a permission error.
+        ("Purchase Order", {"read": 1, "report": 1}),
     ],
     "School HOD": [
         ("Department", {"read": 1}),
@@ -196,6 +198,9 @@ SCHOOL_ROLE_DOCPERMS = {
             "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1,
             "print": 1, "email": 1, "report": 1,
         }),
+        # Read on PO so the Buying workspace (which auto-loads PO charts) opens
+        # without a permission error, and HOD can track requisitions downstream.
+        ("Purchase Order", {"read": 1, "report": 1}),
     ],
     "School Principal": [
         ("Department", {"read": 1}),
