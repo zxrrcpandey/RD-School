@@ -116,6 +116,11 @@ fixtures = [
 # app_include_css = "/assets/rdschool/css/rdschool.css"
 # app_include_js = "/assets/rdschool/js/rdschool.js"
 
+# Form client scripts.
+doctype_js = {
+    "Material Request": "public/js/material_request.js",
+}
+
 # include js, css files in header of web template
 # web_include_css = "/assets/rdschool/css/rdschool.css"
 # web_include_js = "/assets/rdschool/js/rdschool.js"
