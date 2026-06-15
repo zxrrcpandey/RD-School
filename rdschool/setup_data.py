@@ -595,15 +595,41 @@ def create_departments():
     print(f"create_departments: created {created} new (total {len(DEPARTMENTS)})")
 
 
+def _root_cost_center():
+    """Find the company's root (group) cost center dynamically.
+
+    Constructing the name as "{company} - {abbr}" breaks if the Company was
+    RENAMED after setup (cost centers do NOT rename with the company — e.g.
+    prod company is "RDPS Betul" but the root CC is still "RD School Betul -
+    RSB"). Query for the actual root group instead.
+    """
+    company = _company()
+    # The root group cost center has no parent and is_group=1.
+    root = frappe.db.get_value(
+        "Cost Center",
+        {"company": company, "is_group": 1, "parent_cost_center": ["in", ["", None]]},
+        "name",
+    )
+    if root:
+        return root
+    # Fallback: the conventionally-named root.
+    guess = f"{company} - {_abbr()}"
+    return guess if frappe.db.exists("Cost Center", guess) else None
+
+
 def create_cost_centers():
     """Create one cost center per department under the Company's root group.
 
-    Parent is the company-named root group ("RD School Betul - RSB"), not
-    "Main - RSB" — Main is a leaf node used for posting, not a group.
+    Skips gracefully (never aborts setup_all) if the root cost center can't be
+    resolved — the cost centers usually already exist on an established site.
     """
-    parent = f"{_company()} - {_abbr()}"
-    if not frappe.db.exists("Cost Center", parent):
-        raise RuntimeError(f"Expected root cost center {parent!r} not found")
+    parent = _root_cost_center()
+    if not parent:
+        print(
+            "create_cost_centers: SKIPPED — no root cost center found for "
+            f"{_company()!r}. (Existing CCs are left as-is.)"
+        )
+        return
 
     created = 0
     for dept in DEPARTMENTS:
