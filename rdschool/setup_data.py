@@ -82,6 +82,10 @@ ROLE_PROFILES = {
     "School Stores Incharge": [
         "School Stores Incharge",
         "Employee",
+        # Stock User (not just Stock Manager): ERPNext's Stock Ledger / Stock
+        # Balance reports gate on the "Stock User" role specifically — Manager
+        # is NOT treated as a superset for report role lists.
+        "Stock User",
         "Stock Manager",
         "Purchase Manager",
         "Item Manager",
@@ -761,11 +765,17 @@ def ensure_role_profile_roles():
         existing = {r.role for r in prof.roles}
         missing = [r for r in roles if r not in existing]
         if missing:
-            for r in missing:
-                prof.append("roles", {"role": r})
-            prof.save(ignore_permissions=True)
-            changed += 1
-            print(f"  upgraded profile {profile_name!r}: added {missing}")
+            try:
+                for r in missing:
+                    prof.append("roles", {"role": r})
+                prof.save(ignore_permissions=True)
+                changed += 1
+                print(f"  upgraded profile {profile_name!r}: added {missing}")
+            except Exception as e:
+                # A single profile hiccup must not abort the whole reconcile;
+                # user-level roles are handled authoritatively by
+                # assign_full_profile_roles() regardless.
+                print(f"  WARN: could not update profile {profile_name!r}: {e}")
     print(f"ensure_role_profile_roles: updated {changed} existing profiles")
 
 
@@ -2024,6 +2034,20 @@ def verify_deployment(verbose=True):
         ck("HOD sees Cost Centers (dropdown)", ncc > 0, f"{ncc} visible")
     else:
         ck("HOD dropdown check", False, "no School HOD user")
+
+    # 6b. Stores can actually run the stock reports (they gate on Stock User,
+    #     not Stock Manager — this caught a real gap).
+    stores = _a_user_with_role("School Stores Incharge")
+    if stores:
+        su_roles = set(r.role for r in frappe.get_all("Has Role", filters={"parent": stores}, fields=["role"]))
+        for rep in ("Stock Ledger", "Stock Balance"):
+            if frappe.db.exists("Report", rep):
+                rep_roles = set(x.role for x in frappe.get_doc("Report", rep).roles)
+                ck(f"Stores can access '{rep}' report",
+                   not rep_roles or bool(su_roles & rep_roles),
+                   f"report roles={sorted(rep_roles)}")
+    else:
+        ck("Stores stock-report check", False, "no School Stores Incharge user")
 
     # 7. Every enabled School system user has a Company User Permission.
     school_users = set()
