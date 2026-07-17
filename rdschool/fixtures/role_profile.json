@@ -101,7 +101,7 @@
  {
   "docstatus": 0,
   "doctype": "Role Profile",
-  "modified": "2026-06-15 15:01:53.216758",
+  "modified": "2026-06-16 12:19:44.221818",
   "name": "School Stores Incharge",
   "role_profile": "School Stores Incharge",
   "roles": [
@@ -140,6 +140,12 @@
     "parentfield": "roles",
     "parenttype": "Role Profile",
     "role": "School Stores Incharge"
+   },
+   {
+    "parent": "School Stores Incharge",
+    "parentfield": "roles",
+    "parenttype": "Role Profile",
+    "role": "Stock User"
    }
   ]
  },
