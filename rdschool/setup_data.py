@@ -2011,6 +2011,18 @@ def verify_deployment(verbose=True):
         ck(f"doctype {dt} table exists",
            frappe.db.exists("DocType", dt) and frappe.db.table_exists(dt))
 
+    # 4b. ERPNext install-time custom fields exist as real DB columns.
+    #     A fresh site once silently skipped erpnext's after_install field
+    #     creators -> RFQ/PO crashed on tabContact.is_billing_contact weeks
+    #     later. bench migrate can NOT heal this (the Custom Field record
+    #     itself is missing); fix = re-run erpnext.setup.install.create_*
+    #     (see DEPLOYMENT_LESSONS.md, Lesson 1).
+    for dt, fieldname in (("Contact", "is_billing_contact"),
+                          ("Address", "tax_category"),
+                          ("Email Account", "company")):
+        ck(f"erpnext install field {dt}.{fieldname} column exists",
+           frappe.db.has_column(dt, fieldname))
+
     # 5. Per-role permission matrix (incl. a negative control).
     for role, dt, ptype, expected in HEALTH_PERM_EXPECT:
         u = _a_user_with_role(role)

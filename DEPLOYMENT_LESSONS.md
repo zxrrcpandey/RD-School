@@ -42,9 +42,17 @@ bench --site <site> execute erpnext.setup.install.create_custom_company_links
 bench --site <site> clear-cache
 ```
 
+Note: function names vary by erpnext minor — older v15 (e.g. 15.108, on dev)
+has no `create_address_and_contact_custom_fields`; there `Email Account.company`
+comes from `create_custom_company_links`. Check
+`grep "^def create_" apps/erpnext/erpnext/setup/install.py` for what exists.
+
 **Rule for the future:**
-- After bootstrapping ANY new site, run the three commands above once,
+- After bootstrapping ANY new site, run the creators above once,
   then verify: `Contact.is_billing_contact` must exist as a column.
+- `verify_deployment()` now checks these columns (Contact.is_billing_contact,
+  Address.tax_category, Email Account.company) on every deploy — the health
+  gate fails if any are missing.
 - If a user reports `Unknown column 'tabX.y'` anywhere: first check whether the
   Custom Field / DocField record exists. Record missing → re-run the app's
   install-time creator. Record present → `bench migrate`.
